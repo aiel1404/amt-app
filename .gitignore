@@ -1,0 +1,9 @@
+# اطلاعات محرمانه و داده‌های شرکت‌کنندگان هرگز نباید در گیت‌هاب برود
+.streamlit/secrets.toml
+amt_responses.csv
+*.json
+.env
+__pycache__/
+*.pyc
+venv/
+.venv/
