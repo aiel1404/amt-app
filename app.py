@@ -61,6 +61,11 @@ st.markdown("""
         margin-bottom: 20px;
         line-height: 1.8;
     }
+    @media (max-width: 600px) {
+        .word-box { font-size: 40px; padding: 28px 12px; }
+        .hidden-word-box { font-size: 18px; padding: 20px 12px; }
+        .instruction-card { padding: 14px; }
+    }
     .example-card {
         background-color: #e8f4f8;
         border-radius: 6px;
@@ -270,27 +275,28 @@ def typing_fragment():
 
 def typing_screen():
     """
-    مرورگر متن textarea را فقط وقتی به سرور می‌فرستد که فوکوس از آن برود.
-    این اسکریپت چند لحظه قبل از پایان ۶۰ ثانیه، فوکوس را برای لحظه‌ای برمی‌دارد
-    و دوباره برمی‌گرداند تا آخرین متن تایپ‌شده به سرور برسد و ذخیره شود.
+    مرورگر متن textarea را فقط با فوکوس‌رفتن یا Ctrl+Enter به سرور می‌فرستد.
+    این اسکریپت هر ۳ ثانیه (و کمی قبل از پایان ۶۰ ثانیه) Ctrl+Enter را شبیه‌سازی می‌کند
+    تا متن بدون بسته‌شدن کیبورد گوشی به سرور برسد و در صورت تایم‌اوت ذخیره شود.
     """
     remaining_ms = int(max(0, TYPE_TIME - (time.time() - st.session_state.phase_start_time)) * 1000)
     js = """
     <script>
     const remaining = __REMAINING__;
+    // معادل Ctrl+Enter در Streamlit: متن را بدون برداشتن فوکوس (و بدون بسته‌شدن کیبورد گوشی) به سرور می‌فرستد
     function commit() {
       try {
         const el = window.parent.document.activeElement;
         if (el && el.tagName === 'TEXTAREA') {
-          el.blur();
-          setTimeout(() => el.focus(), 80);
+          el.dispatchEvent(new KeyboardEvent('keydown', {
+            key: 'Enter', code: 'Enter', keyCode: 13, which: 13,
+            ctrlKey: true, bubbles: true, cancelable: true
+          }));
         }
       } catch (e) {}
     }
-    [4000, 2000, 700].forEach(b => {
-      const t = remaining - b;
-      if (t > 0) setTimeout(commit, t);
-    });
+    setInterval(commit, 3000);
+    if (remaining > 600) setTimeout(commit, remaining - 600);
     </script>
     """.replace("__REMAINING__", str(remaining_ms))
     components.html(js, height=0)
